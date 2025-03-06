@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.corr_lookup import CorrLookup, bilinear_sample, coords_grid
-from model.raft_decoder import MotionEncoder, XHead, CorrelationPyramid
+from model.stage3.raft_decoder import MotionEncoder, XHead, CorrelationPyramid
 
 
 class FlowDecoder(nn.Module):
-    def __init__(self, cfg,) -> None:
+    def __init__(self, num_levels, radius) -> None:
         super().__init__()
-        self.num_levels = cfg.num_levels
-        self.radius = cfg.radius
+        self.num_levels = num_levels
+        self.radius = radius
 
         self.proj = []
         self.corr_block, self.corr_lookup = [], []

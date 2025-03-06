@@ -47,10 +47,6 @@ class Dataset():
             os.path.join('MegaPose-GSO', 'train_pbr_web'),
             os.path.join('MegaPose-ShapeNetCore', 'train_pbr_web')
         ]
-        self.model_paths = [
-            os.path.join(self.data_dir, 'MegaPose-GSO', 'Google_Scanned_Objects'),
-            os.path.join(self.data_dir, 'MegaPose-ShapeNetCore', 'shapenetcorev2'),
-        ]
         self.templates_paths = [
             os.path.join(self.data_dir, 'MegaPose-Templates', 'GSO'),
             os.path.join(self.data_dir, 'MegaPose-Templates', 'ShapeNetCore'),

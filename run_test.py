@@ -127,7 +127,7 @@ def run_test(model, cfg, save_path, dataset_name, detetion_path):
             for j in range(n_batch):
                 start_idx = j * bs
                 end_idx = dataset.n_template_view if j == n_batch-1 else (j+1) * bs
-                features = model.backbone(templates_data['tem_rgb'][obj_idx][start_idx:end_idx].contiguous())
+                features = model.feature_extractor(templates_data['tem_rgb'][obj_idx][start_idx:end_idx].contiguous())
                 template_features[obj_idx].append(features[-1])
             template_features[obj_idx] = torch.cat(template_features[obj_idx]).squeeze()
 

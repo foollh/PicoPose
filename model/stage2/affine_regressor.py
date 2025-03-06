@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class Regressor(nn.Module):
+class AffineRegressor(nn.Module):
     """
     A simple MLP to regress scale and rotation from DINOv2 features
     """
@@ -14,7 +14,7 @@ class Regressor(nn.Module):
         use_tanh_act=True,
         normalize_output=True,
     ):
-        super(Regressor, self).__init__()
+        super(AffineRegressor, self).__init__()
         self.in_channel = cfg.in_channel
         self.hidden_dim = cfg.hidden_dim
         self.normalize_output = normalize_output

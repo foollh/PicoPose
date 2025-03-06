@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch import optim
 from timm import scheduler
-from pytorch_lightning.lite import LightningLite
 import pytorch_lightning as pl
 
 

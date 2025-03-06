@@ -169,17 +169,15 @@ def _make_fusion_block(features, use_bn, size = None):
 
 
 class DPTHead(nn.Module):
-    def __init__(self, cfg, features=256, use_clstoken=False):
+    def __init__(self, nclass, in_channels, features=256, use_bn=False, out_channels=[256, 512, 1024, 1024], use_clstoken=False):
         super().__init__()
         
-        self.nclass = cfg.nclass
-        self.in_channels = cfg.in_channels
-        use_bn = cfg.use_bn
-        out_channels = cfg.out_channels
+        self.nclass = nclass
+        self.use_clstoken = use_clstoken
         
         self.projects = nn.ModuleList([
             nn.Conv2d(
-                in_channels=self.in_channels,
+                in_channels=in_channels,
                 out_channels=out_channel,
                 kernel_size=1,
                 stride=1,
@@ -214,7 +212,7 @@ class DPTHead(nn.Module):
             for _ in range(len(self.projects)):
                 self.readout_projects.append(
                     nn.Sequential(
-                        nn.Linear(2 * self.in_channels, self.in_channels),
+                        nn.Linear(2 * in_channels, in_channels),
                         nn.GELU()))
         
         self.scratch = _make_scratch(
@@ -234,11 +232,11 @@ class DPTHead(nn.Module):
         head_features_1 = features
         head_features_2 = 32
         
-        if self.nclass > 1:
+        if nclass > 1:
             self.scratch.output_conv = nn.Sequential(
                 nn.Conv2d(head_features_1, head_features_1, kernel_size=3, stride=1, padding=1),
                 nn.ReLU(True),
-                nn.Conv2d(head_features_1, self.nclass, kernel_size=1, stride=1, padding=0),
+                nn.Conv2d(head_features_1, nclass, kernel_size=1, stride=1, padding=0),
             )
         else:
             self.scratch.output_conv1 = nn.Conv2d(head_features_1, head_features_1 // 2, kernel_size=3, stride=1, padding=1)
@@ -250,7 +248,7 @@ class DPTHead(nn.Module):
                 nn.ReLU(True),
                 nn.Identity(),
             )
-            
+
     def forward(self, out_features):
         out = []
         for i, x in enumerate(out_features):

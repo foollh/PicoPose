@@ -79,14 +79,14 @@ def _make_dinov2_model(
     return model
 
 
-class DINOV2(nn.Module):
+class FeatureExtractor(nn.Module):
     def __init__(self, cfg, freeze=False):
         super().__init__()
         self.cfg = cfg
         self.blocks_to_take = [blocks[-1] for blocks in cfg.interaction_indexes]
 
         self.dinov2 = _make_dinov2_model(arch_name=descriptor_map[cfg.vit_type], pretrained=cfg.pretrained)
-        
+
         self.num_features = self.dinov2.num_features
         self.patch_size = self.dinov2.patch_size
 
@@ -107,5 +107,4 @@ class DINOV2(nn.Module):
         ]
 
         return outputs
-
 

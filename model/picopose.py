@@ -4,10 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
-from model.dinov2.dinov2 import DINOV2
-from model.regressor import Regressor
-from model.dpt import DPTHead
-from model.flow_decoder import FlowDecoder
+from model.stage1.feature_extractor import FeatureExtractor
+from model.stage2.affine_regressor import AffineRegressor
+from model.stage3.offset_regressor import OffsetRegressor
 from utils.correspondence import compute_init_correspondences, compute_stage3_correspondences
 from utils.loss_utils import compute_stage_one_loss, compute_stage_two_loss, compute_stage_three_loss
 from utils.matching import matching_templates, matching_features_similarity
@@ -23,11 +22,9 @@ class Net(nn.Module):
         self.cfg = cfg
         self.keypoint_sampler = KeyPointSampler()
 
-        self.backbone = DINOV2(cfg.stage1)
-        self.regressor = Regressor(cfg.stage2)
-        self.dpt = DPTHead(cfg.stage3)
-        self.decoder = FlowDecoder(cfg.stage3)
-
+        self.feature_extractor = FeatureExtractor(cfg.stage1)
+        self.affine_regressor = AffineRegressor(cfg.stage2)
+        self.offset_regressor = OffsetRegressor(cfg.stage3)
 
     def compute_keypoint_data(self, end_points):
         rel_pose = end_points['tem_pose'] @ (end_points['real_pose'].inverse())
@@ -51,7 +48,6 @@ class Net(nn.Module):
             T_tar2source=T_real2template,
         )
         return keypoint_data
-
 
     def select_template_data(self, end_points, pred_id_src, k):
         selected_end_points = {}
@@ -79,11 +75,11 @@ class Net(nn.Module):
         output['tar_pts_2d'], output['src_pts_3d'] = end_points['real_pts2d'].permute(0,3,2,1), end_points['tem_pts3d'].permute(0,3,1,2)
         
         ################################################ stage 1 ################################################
-        features_tem = self.backbone(end_points['tem_rgb'])
+        features_tem = self.feature_extractor(end_points['tem_rgb'])
 
         ################################################ stage 2 ################################################
         sim = matching_features_similarity(features_tem[-1], features_real[-1], end_points['tem_mask'], end_points['real_mask'])  
-        pred_translation, pred_scale, pred_inplane = self.regressor(sim)
+        pred_translation, pred_scale, pred_inplane = self.affine_regressor(sim)
 
         pred_Ms = calc_pred_Ms(pred_scale, pred_inplane, pred_translation, end_points['tem_pose'], end_points['tem_K'], end_points['tem_M'])
         # recovery from template pose
@@ -93,14 +89,13 @@ class Net(nn.Module):
         )
         ################################################ stage 3 ################################################
         init_flow, init_certainty = compute_init_correspondences(pred_Ms, end_points['tem_mask'])
-        features_tem, features_real = self.dpt(features_tem), self.dpt(features_real)
-        pred_flow, pred_certainty = self.decoder(features_tem, features_real, init_flow, init_certainty)
+        pred_flow, pred_certainty = self.offset_regressor(features_tem, features_real, init_flow, init_certainty)
         output['pred_tar_pts'], output['pred_src_pts'] = compute_stage3_correspondences(pred_flow[-1], pred_certainty[-1], threshold=0.5)
 
         return output
 
     def forward_test(self, end_points, hyp=5):
-        features_real = self.backbone(end_points['real_rgb'])
+        features_real = self.feature_extractor(end_points['real_rgb'])
         feature_tem = F.normalize(end_points['template_feature'], dim=2)
 
         # matching templates
@@ -121,22 +116,21 @@ class Net(nn.Module):
         keypoint_data = self.compute_keypoint_data(end_points)
 
         ################################################ stage 1 ################################################
-        features_real = self.backbone(end_points['real_rgb'])
-        features_tem = self.backbone(end_points['tem_rgb'])
+        features_real = self.feature_extractor(end_points['real_rgb'])
+        features_tem = self.feature_extractor(end_points['tem_rgb'])
         # loss
         end_points['loss_info'] = compute_stage_one_loss(features_tem[-1], features_real[-1], keypoint_data['src_pts'], keypoint_data['tar_pts']) 
 
         ################################################ stage 2 ################################################
         sim = matching_features_similarity(features_tem[-1], features_real[-1], end_points['tem_mask'], end_points['real_mask']) 
-        pred_translation, pred_scale, pred_inplane = self.regressor(sim)
+        pred_translation, pred_scale, pred_inplane = self.affine_regressor(sim)
         # loss
         end_points['loss_2d_trans'], end_points['loss_scale'], end_points['loss_inplane'] = compute_stage_two_loss(end_points, pred_translation, pred_scale, pred_inplane)
         
         ################################################ stage 3 ################################################
         pred_Ms = aug_gtM_noise(end_points)
         init_flow, init_certainty = compute_init_correspondences(pred_Ms, end_points['tem_mask'])
-        features_tem, features_real = self.dpt(features_tem), self.dpt(features_real)
-        pred_flow, pred_certainty = self.decoder(features_tem, features_real, init_flow, init_certainty)
+        pred_flow, pred_certainty = self.offset_regressor(features_tem, features_real, init_flow, init_certainty)
         # loss
         end_points = compute_stage_three_loss(end_points, pred_flow, pred_certainty, keypoint_data['tar_pts'])
 

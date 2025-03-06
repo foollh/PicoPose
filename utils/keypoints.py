@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import torch
-from torch_utils import (
+from .torch_utils import (
     project_points,
     unproject_points,
     homogenuous,
