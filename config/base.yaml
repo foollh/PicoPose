@@ -1,0 +1,80 @@
+trainer:
+  rd_seed: 0
+  training_epoch: 10
+  iters_to_print: 100
+  strategy: 'ddp'
+  accelerator: 'gpu'
+  devices: [0,1,2,3]
+
+optimizer:
+  type : AdamW
+  lr   : 0.00001  
+  betas: [0.5, 0.999]
+  eps  : 0.000001
+  weight_decay: 0.0005
+
+lr_scheduler:
+  type: WarmupCosineLR
+  max_iters: 400000
+  warmup_factor: 0.001
+  warmup_iters: 1000
+
+model: 
+  hypothesis: 5
+  stage1:
+    vit_type: dinov2_vitl14 
+    pretrained: True 
+    interaction_indexes: [[0, 5], [6, 11], [12, 17], [18, 23]]
+  stage2:
+    in_channel: 256
+    hidden_dim: 256
+  stage3:
+    # dpt
+    nclass: 1
+    in_channels: 1024
+    use_bn: True
+    out_channels: [256, 512, 1024, 1024]
+    # decoder
+    num_levels: 3
+    radius: 4
+
+train_dataset:
+  name: training_dataset
+  data_dir: data/MegaPose-Training-Data
+  img_size: 224
+  min_visib_fract: 0.3
+  min_px_count_visib: 1024
+  rgb_mask_flag: False 
+  size_ratio: 1.
+  dilate_mask: False
+  augment_real: True
+  augment_tem: False
+
+train_dataloader:
+  bs            : 8
+  num_workers   : 10
+  shuffle       : True
+  drop_last     : True
+  pin_memory    : False
+
+
+
+test_dataset:
+  name: bop_test_dataset
+  data_dir: data/BOP_Datasets
+  template_dir: data/BOP_Datasets/templates
+  img_size: 224
+  minimum_n_point: 8
+  rgb_mask_flag: False  
+  seg_filter_score: 0.
+  n_template_view: 162
+  pts_size: 64
+
+test_dataloader:
+  bs            : 4
+  num_workers   : 10
+  shuffle       : False
+  drop_last     : False
+  pin_memory    : False
+
+
