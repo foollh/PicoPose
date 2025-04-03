@@ -154,14 +154,10 @@ class BOPTestset():
         scene_folder = os.path.join(self.data_folder, f'{scene_id:06d}')
         scene_camera = json.load(open(os.path.join(scene_folder, 'scene_camera.json')))
         K = np.array(scene_camera[str(img_id)]['cam_K']).reshape((3, 3)).copy()
-        depth_scale = scene_camera[str(img_id)]['depth_scale']
         inst = dict(scene_id=scene_id, img_id=img_id, data_folder=self.data_folder)
 
         obj_idx = self.obj_idxs[obj_id]
         pose = np.eye(4)
-
-        # depth
-        depth = get_bop_depth_map(inst) * depth_scale
 
         # mask
         h,w = seg['size']
@@ -170,7 +166,6 @@ class BOPTestset():
         except:
             rle = seg
         mask = cocomask.decode(rle)
-        mask = np.logical_and(mask > 0, depth > 0)
         if np.sum(mask) > self.minimum_n_point:
             bbox = get_bbox(mask)
             y1, y2, x1, x2 = bbox
@@ -178,13 +173,6 @@ class BOPTestset():
             y1, y2, x1, x2 = get_square_bbox([bbox[1], bbox[1]+bbox[3], bbox[0], bbox[0]+bbox[2]], (h,w))
         
         mask = mask[y1:y2, x1:x2]
-        # choose = mask.astype(np.float32).flatten().nonzero()[0]
-        # if np.sum(mask) < self.minimum_n_point:
-        #     return None
-
-        # pts
-        pts = get_point_cloud_from_depth(depth, self.templates_K, [y1, y2, x1, x2])
-        pts = cv2.resize(pts, (self.pts_size, self.pts_size), interpolation=cv2.INTER_NEAREST)
 
         # rgb
         rgb, mask = get_bop_image(inst, [y1,y2,x1,x2], self.img_size, mask, self.rgb_mask_flag)
@@ -210,7 +198,6 @@ class BOPTestset():
         return {
             'pts2d':pts2d, 
             'rgb': rgb, 
-            'pts': pts, 
             'mask': mask, 
             'bbox': bbox, 
             'M': M, 

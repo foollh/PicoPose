@@ -103,7 +103,7 @@ class FeatureExtractor(nn.Module):
 
         # class_tokens = [out[:, 0] for out in outputs]
         outputs = [
-            out[:, 1:].permute(0,2,1).reshape(bs, self.num_features, h//self.patch_size, w//self.patch_size) for out in outputs
+            out[:, 1:].permute(0,2,1).reshape(bs, self.num_features, h//self.patch_size, w//self.patch_size).contiguous() for out in outputs
         ]
 
         return outputs
