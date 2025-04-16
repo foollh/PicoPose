@@ -1,0 +1,19 @@
+torch==2.0.0
+torchvision==0.15.1
+opencv-python==4.9.0.80
+einops==0.7.0
+scipy==1.13.0
+timm==0.9.12
+xformers==0.0.18
+imgaug==0.4.0
+mmcv==2.0.0 -f https://download.openmmlab.com/mmcv/dist/cu117/torch2.0/index.html
+pycocotools==2.0.7
+trimesh==4.3.1
+pytorch-lightning==1.8.1
+scikit-learn==1.6.1
+numpy==1.26.4
+pandas==2.2.2
+imageio==2.37.0
+pillow==11.1.0
+omegaconf==2.3.0
+gdown
