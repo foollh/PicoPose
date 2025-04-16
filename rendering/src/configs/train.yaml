@@ -1,0 +1,51 @@
+defaults:
+  - user: default
+  - machine: local
+  - callback: base
+  - model: large
+  - data: all
+  - _self_
+
+save_dir: ${machine.root_dir}/results/${name_exp}
+name_exp: train
+use_pretrained: true 
+
+train_dataset_id: 0 # 0 for gso, 1 for shapenet, 2 for both
+nets_to_train: all
+
+# parameters for rendering templates for training
+# # render-5
+# start_idx: 2389
+# end_idx: 5000
+# start_idx: 11000
+# end_idx: 12000
+# start_idx: 14000
+# end_idx: 16000
+
+
+# # render-6
+# start_idx: 5000
+# end_idx: 7500
+# start_idx: 10000
+# end_idx: 11000
+# start_idx: 16000
+# end_idx: 18000
+
+# render-7
+# start_idx: 7500 
+# end_idx: 9000
+# start_idx: 9000
+# end_idx: 10000
+# start_idx: 12000
+# end_idx: 14000
+
+# # render-8
+# start_idx: 18000
+# end_idx: 20000
+
+
+start_idx: 
+end_idx: 
+
+# parameters for custom objects
+custom_dataset_name: custom

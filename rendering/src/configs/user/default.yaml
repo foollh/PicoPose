@@ -1,0 +1,4 @@
+wandb_api_key: 
+wandb_project_name: gigapose
+local_root_dir: /data/Fast-SAM-6D/Instance_Segmentation_Model/data
+slurm_root_dir: /data/Fast-SAM-6D/Instance_Segmentation_Model/data
